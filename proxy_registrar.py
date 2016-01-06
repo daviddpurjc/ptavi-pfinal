@@ -1,0 +1,97 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+"""
+Clase (y programa principal) para un servidor de eco en UDP simple
+"""
+
+import socketserver
+import sys
+import json
+import time
+from lxml import etree
+
+class SIPRegisterHandler(socketserver.DatagramRequestHandler):
+    """
+    Echo server class
+    """
+    dic = {}
+    direccion = ''
+    campoexpire = ''
+    listas = []
+    
+
+    def handle(self):
+        """ Metodo principal del servidor. """
+        # Comprueba que no tenemos usuarios registrados, y llama al metodo json2registered.
+        if self.listas == []:
+            self.json2registered()
+        # Escribe dirección y puerto del cliente (de tupla client_address)
+        print (self.client_address)
+        line = self.rfile.read()
+        print("El cliente nos manda " + line.decode('utf-8'))
+        deco = line.decode('utf-8')
+        
+        if deco.startswith('REGISTER')
+            if deco.find('Authorization:')!=-1:
+                self.direccion = deco[deco.find(':')+1:deco.find('SIP')-1]
+                self.dic[self.direccion] = self.client_address[0]
+                self.campoexpire = deco[deco.find('s:')+3:]
+                self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+                if self.campoexpire == '0\r\n':
+                    del self.dic[self.direccion]
+                print(self.dic)
+                self.register2json()
+            else:
+                self.wfile.write(b"SIP/2.0 401 Unauthorized\r\nWWW Authenticate: nonce="89898989"")
+        elif deco.startswith('INVITE') or deco.startswith('BYE') or deco.startswith('ACK')
+            direc = deco[deco.find('p:')+2:deco.find(' ')]
+            my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            my_socket.connect((IPdestino, PUERTOdestino))
+            print("Enviando: " + deco)
+            my_socket.send(bytes(deco, 'utf-8') + b'\r\n')
+            data = my_socket.recv(1024)
+            r = data.decode('utf-8')
+            print('Recibido -- ', r)
+            if r.startswith("SIP/2.0 100") or r.startswith("SIP/2.0 200"):
+                self.wfile.write(r)
+
+    def register2json(self):
+        """ Gestionamos los usuarios registrados"""
+        expira = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(int(self.campoexpire)+time.time()))
+        dicc2 = {'address' : self.client_address[0], 'expires': expira}
+        # Recorremos la lista de listas de usuarios para que si ya existía el usuario, borremos su informacion
+        # que será actualizada con su nuevo valor de expiración.
+        for lista in self.listas:
+            if lista[0] == self.direccion:
+                self.listas.remove(lista)
+        self.listas.append([self.direccion,dicc2])
+        # Comprobamos la expiracion de los usuarios registrados, y si alguno ha caducado lo borramos.
+        for lista in self.listas:
+            if lista[1]['expires'] <= time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time())):
+                self.listas.remove(lista)
+        json.dump(self.listas, open("registered.json",'w'), sort_keys=True, indent=4, separators=(',', ': '))
+
+    def json2registered(self):
+        """ Comprueba si existe un fichero json para usarlo como lista de usuarios registrados """
+        try:
+            self.listas = json.load(open("registered.json",'r'))
+            print (self.listas)
+        except:
+            pass
+
+if __name__ == "__main__":
+    # Creamos servidor de eco y escuchamos
+    if len(sys.argv) != 2:
+        sys.exit("Usage: python uaserver.py config")
+
+    try:
+        config = sys.argv[1]
+        fich = etree.parse(str(config))
+        raiz = fich.getroot()
+        PUERTO = raiz.find("server").attrib["puerto"]
+        serv = socketserver.UDPServer(('', PUERTO), SIPRegisterHandler)
+        print("Server MiTesoro listening at port "+PUERTO+"...")
+        serv.serve_forever()
+    except:
+        sys.exit("Usage: python uaserver.py config")
