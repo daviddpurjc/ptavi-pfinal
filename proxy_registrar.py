@@ -3,7 +3,7 @@
 """
 Clase (y programa principal) para un servidor de eco en UDP simple
 """
-
+import socket
 import socketserver
 import sys
 import json
@@ -21,33 +21,35 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
     
 
     def handle(self):
-        """ Metodo principal del servidor. """
+        """ Metodo principal del servidorproxy. """
         # Comprueba que no tenemos usuarios registrados, y llama al metodo json2registered.
         if self.listas == []:
             self.json2registered()
         # Escribe dirección y puerto del cliente (de tupla client_address)
-        print (self.client_address)
+        #print (self.client_address)
         line = self.rfile.read()
         print("El cliente nos manda " + line.decode('utf-8'))
         deco = line.decode('utf-8')
         
-        if deco.startswith('REGISTER')
+        if deco.startswith('REGISTER'):
             if deco.find('Authorization:')!=-1:
-                self.direccion = deco[deco.find(':')+1:deco.find('SIP')-1]
+                self.direccion = deco[deco.find('sip:')+4:deco.find(':')]
                 self.dic[self.direccion] = self.client_address[0]
-                self.campoexpire = deco[deco.find('s:')+3:]
+                self.campoexpire = deco[deco.find('Expires:')+9:deco.find("\r\nAuth")]
                 self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
                 if self.campoexpire == '0\r\n':
                     del self.dic[self.direccion]
                 print(self.dic)
                 self.register2json()
             else:
-                self.wfile.write(b"SIP/2.0 401 Unauthorized\r\nWWW Authenticate: nonce="89898989"")
-        elif deco.startswith('INVITE') or deco.startswith('BYE') or deco.startswith('ACK')
+                self.wfile.write(b"SIP/2.0 401 Unauthorized\r\nWWW Authenticate: nonce=89898989")
+        elif deco.startswith('INVITE') or deco.startswith('BYE') or deco.startswith('ACK'):
             direc = deco[deco.find('p:')+2:deco.find(' ')]
+            IPdestino = ""
+            PUERTOdestino = 5000 
             my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            my_socket.connect((IPdestino, PUERTOdestino))
+            my_socket.connect((IPdestino, int(PUERTOdestino)))
             print("Enviando: " + deco)
             my_socket.send(bytes(deco, 'utf-8') + b'\r\n')
             data = my_socket.recv(1024)
@@ -55,6 +57,8 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
             print('Recibido -- ', r)
             if r.startswith("SIP/2.0 100") or r.startswith("SIP/2.0 200"):
                 self.wfile.write(r)
+        else:
+            self.wfile.write("SIP/2.0 405 Method Not Allowed")
 
     def register2json(self):
         """ Gestionamos los usuarios registrados"""
@@ -83,15 +87,15 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
     if len(sys.argv) != 2:
-        sys.exit("Usage: python uaserver.py config")
+        sys.exit("Usage: python uaserver.py coooonfig")
 
     try:
         config = sys.argv[1]
         fich = etree.parse(str(config))
         raiz = fich.getroot()
-        PUERTO = raiz.find("server").attrib["puerto"]
-        serv = socketserver.UDPServer(('', PUERTO), SIPRegisterHandler)
-        print("Server MiTesoro listening at port "+PUERTO+"...")
+        puertomio = raiz.find("server").attrib["puerto"]
+        serv = socketserver.UDPServer(('', int(puertomio)), SIPRegisterHandler)
+        print("Server MiTesoro listening at port "+puertomio+"...")
         serv.serve_forever()
     except:
         sys.exit("Usage: python uaserver.py config")
