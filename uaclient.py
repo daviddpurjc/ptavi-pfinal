@@ -30,12 +30,15 @@ else:
 
 USUARIO = raiz.find("account").attrib["username"]
 IP = raiz.find("uaserver").attrib["ip"]
+if IP == '':
+    IP = "127.0.0.1"
+
 IPproxy = raiz.find("regproxy").attrib["ip"]
 PUERTO = raiz.find("uaserver").attrib["puerto"]
 PUERTORTP = raiz.find("rtpaudio").attrib["puerto"]
 PUERTOPROXY = raiz.find("regproxy").attrib["puerto"]
 LINEack = 'ACK sip:'+receptor+' SIP/2.0\r\n'
-LINEinv = 'INVITE sip:'+receptor+' SIP/2.0\r\nContent-Type: application/sdp\r\n\r\nv=0\r\no='+USUARIO+' '+IP+'\r\ns=tomorrowland\r\nt=0\r\nm=audio '+PUERTORTP+'RTP\r\n'
+LINEinv = 'INVITE sip:'+receptor+' SIP/2.0\r\nContent-Type: application/sdp\r\n\r\nv=0\r\no='+USUARIO+' '+IP+'\r\ns=tomorrowland\r\nt=0\r\nm=audio '+PUERTORTP+' RTP\r\n'
 LINEbye = 'BYE sip:'+receptor+' SIP/2.0\r\n'
 LINEreg = 'REGISTER sip:'+USUARIO+':'+PUERTO+' SIP/2.0\r\n'+'Expires: '+expires
 

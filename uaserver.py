@@ -13,6 +13,8 @@ class SIPHandler(socketserver.DatagramRequestHandler):
     """
     Echo server class
     """
+    ipEmisor = ''
+    puertoRTP = ''
 
     def handle(self):
         """ Metodo principal del servidor. """
@@ -23,14 +25,22 @@ class SIPHandler(socketserver.DatagramRequestHandler):
         # Envia la respuesta de Trying+Ring+OK, si recibe un INVITE.
         if deco.startswith('INVITE'):
             self.wfile.write(b"SIP/2.0 100 Trying\r\nSIP/2.0 180 Ring\r\nSIP/2.0 200 OK\r\n\r\n")
+            origen = deco[deco.find('o='):deco.find('s=')]
+            self.ipEmisor = origen[origen.find(' ')+1:]
+            self.puertoRTP = deco[deco.find('audio')+6:deco.find('RTP')]
+            print(origen+self.ipEmisor+self.puertoRTP)
         # Envia el audio al recibir el ACK.
         elif deco.startswith('ACK'):
-            fichero_audio = str(sys.argv[3])
+            fichero_audio = raiz.find("audio").attrib["path"]
+            print(self.ipEmisor)
             #Aqui tengo que hacer que lea ip y puerto de recepcion de rtp
-            origen = deco[deco.find('o='):deco.find('\r\n')]
-            ipEmisor = origen[origen.find(' ')+1:origen.find('\r\n')]
-            puertoRTP = deco[deco.find('audio')+6:deco.find(' ')]
-            aEjecutar = "./mp32rtp -i "+ipEmisor+" -p "+puertoRTP+" < " + fichero_audio
+            #origen = deco[deco.find('o='):deco.find('\r\n')]
+            #ipEmisor = origen[origen.find(' ')+1:origen.find('\r\n')]
+            #puertoRTP = deco[deco.find('audio')+6:deco.find(' ')]
+            #print(origen)
+            #print(ipEmisor)
+            #print(puertoRTP)
+            aEjecutar = "./mp32rtp -i "+self.ipEmisor+" -p "+self.puertoRTP+" < " + fichero_audio
             print("Vamos a ejecutar: ")
             print(aEjecutar)
             os.system(aEjecutar)
