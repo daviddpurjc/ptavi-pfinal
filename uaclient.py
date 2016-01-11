@@ -106,6 +106,11 @@ else:
     log = open("logclient.txt",'a')
     log.write(time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time()))+rec+"\r\n")
     log.close()
+    print("Enviando: " + LINEack)
+    log = open("logclient.txt",'a')
+    log.write(time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time()))+LINEack+"\r\n")
+    log.close()
+    my_socket.send(bytes(LINEbye, 'utf-8') + b'\r\n')
 
 print("Terminando socket...")
 

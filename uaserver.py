@@ -13,8 +13,10 @@ class SIPHandler(socketserver.DatagramRequestHandler):
     """
     Echo server class
     """
-    ipEmisor = ''
-    puertoRTP = ''
+    #ipEmisor = ''
+    #puertoRTP = ''
+    aEjecutar = ''
+    #linea = ''
 
     def handle(self):
         """ Metodo principal del servidor. """
@@ -26,30 +28,30 @@ class SIPHandler(socketserver.DatagramRequestHandler):
         if deco.startswith('INVITE'):
             self.wfile.write(b"SIP/2.0 100 Trying\r\nSIP/2.0 180 Ring\r\nSIP/2.0 200 OK\r\n\r\n")
             origen = deco[deco.find('o='):deco.find('s=')]
-            self.ipEmisor = origen[origen.find(' ')+1:]
-            self.puertoRTP = deco[deco.find('audio')+6:deco.find('RTP')]
-            print(origen+self.ipEmisor+self.puertoRTP)
+            ipEmisor = origen[origen.find(' ')+1:origen.find("\r\n")]
+            puertoRTP = deco[deco.find('audio')+6:deco.find('RTP')-1]
+            fichero_audio = raiz.find("audio").attrib["path"]
+            self.aEjecutar = "./mp32rtp -i "+ipEmisor+" -p "+puertoRTP+" < " + fichero_audio
+            print(self.aEjecutar)
+            self.guarda()
         # Envia el audio al recibir el ACK.
         elif deco.startswith('ACK'):
-            fichero_audio = raiz.find("audio").attrib["path"]
-            print(self.ipEmisor)
-            #Aqui tengo que hacer que lea ip y puerto de recepcion de rtp
-            #origen = deco[deco.find('o='):deco.find('\r\n')]
-            #ipEmisor = origen[origen.find(' ')+1:origen.find('\r\n')]
-            #puertoRTP = deco[deco.find('audio')+6:deco.find(' ')]
-            #print(origen)
-            #print(ipEmisor)
-            #print(puertoRTP)
-            aEjecutar = "./mp32rtp -i "+self.ipEmisor+" -p "+self.puertoRTP+" < " + fichero_audio
+            logo = open("linea.txt",'r')
             print("Vamos a ejecutar: ")
-            print(aEjecutar)
-            os.system(aEjecutar)
+            print(logo.readline())
+            os.system(logo.readline())
+            self.wfile.write(b"BYE sip: papapapapa SIP/2.0\r\n")
         # Cuando el servidor reciba el BYE significará el cese de la llamada.
         elif deco.startswith('BYE'):
             self.wfile.write(b"SIP/2.0 200 OK cuelga tu cuelgo yo")
         # Si el método no es válido, el servidor se lo hará saber.
         else:
             self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")
+
+    def guarda(self):
+        logg = open("linea.txt",'a')
+        logg.write(self.aEjecutar)
+        logg.close()
 
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
