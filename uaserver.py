@@ -26,7 +26,8 @@ class SIPHandler(socketserver.DatagramRequestHandler):
         deco = line.decode('utf-8')
         # Envia la respuesta de Trying+Ring+OK, si recibe un INVITE.
         if deco.startswith('INVITE'):
-            self.wfile.write(b"SIP/2.0 100 Trying\r\nSIP/2.0 180 Ring\r\nSIP/2.0 200 OK\r\n\r\n")
+            sdp = deco[deco.find("Content"):]
+            self.wfile.write(b"SIP/2.0 100 Trying\r\nSIP/2.0 180 Ring\r\nSIP/2.0 200 OK\r\n\r\n"+sdp.encode('utf-8'))
             origen = deco[deco.find('o='):deco.find('s=')]
             ipEmisor = origen[origen.find(' ')+1:origen.find("\r\n")]
             puertoRTP = deco[deco.find('audio')+6:deco.find('RTP')-1]

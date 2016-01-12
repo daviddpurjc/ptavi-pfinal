@@ -54,65 +54,78 @@ elif metodo == 'REGISTER':
 
 
 # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
-try:
-    my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    my_socket.connect((IPproxy, int(PUERTOPROXY)))
-except:
-    ## 20101018160243 Error: No server listening at 193.147.73 port 5555
-    sys.exit("Error: No server listening")
+my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+my_socket.connect((IPproxy, int(PUERTOPROXY)))
 
 #log = open("logclient.txt",'r')
-log = open("logclient.txt",'a')
-log.write(time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time()))+" Starting...\r\n")
+FICHEROLOG = raiz.find("log").attrib["path"]
+#try:
+log = open(FICHEROLOG,'a')
+log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" Starting...\r\n")
 log.close()
-
 print("Enviando: " + LINE)
-log = open("logclient.txt",'a')
-log.write(time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time()))+LINE+"\r\n")
+log = open(FICHEROLOG,'a')
+log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+LINE+"\r\n")
 log.close()
 my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
-data = my_socket.recv(1024)
-r = data.decode('utf-8')
-print('Recibido -- ', r)
-log = open("logclient.txt",'a')
-log.write(time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time()))+r+"\r\n")
-log.close()
+try:
+    data = my_socket.recv(1024)
+    r = data.decode('utf-8')
+    print('Recibido -- ', r)
+    log = open(FICHEROLOG,'a')
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+r+"\r\n")
+    log.close()
+except:
+    log = open(FICHEROLOG,'a')
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" Error: No server listening at "+IPproxy+" port "+PUERTOPROXY+"\r\n")
+    log.close()
+    sys.exit("Error: No server listening")
 
 if r.startswith("SIP/2.0 401 Unauthorized"):
     LINEregAut = LINEreg+"\r\nAuthorization: response=3949485"
     print("Enviando: " + LINEregAut)
-    log = open("logclient.txt",'a')
-    log.write(time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time()))+LINEregAut+"\r\n")
+    log = open(FICHEROLOG,'a')
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+LINEregAut+"\r\n")
     log.close()
     my_socket.send(bytes(LINEregAut, 'utf-8') + b'\r\n')
     data = my_socket.recv(5120)
     re = data.decode('utf-8')
     print('Recibido -- ', re)
-    log = open("logclient.txt",'a')
-    log.write(time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time()))+re+"\r\n")
+    log = open(FICHEROLOG,'a')
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+re+"\r\n")
     log.close()
-elif r == "SIP/2.0 100 Trying\r\nSIP/2.0 180 Ring\r\nSIP/2.0 200 OK\r\n\r\n":
+elif r.startswith("SIP/2.0 100 Trying"):
     print("Enviando: " + LINEack)
-    log = open("logclient.txt",'a')
-    log.write(time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time()))+LINEack+"\r\n")
+    log = open(FICHEROLOG,'a')
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+LINEack+"\r\n")
     log.close()
     my_socket.send(bytes(LINEack, 'utf-8') + b'\r\n')
     data = my_socket.recv(5120)
+elif r == "Error: no server listening at that direction":
+    log = open(FICHEROLOG,'a')
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+r+"\r\n")
+    log.close()
+    sys.exit("Error: No server listening")
+elif r.startswith("SIP/2.0 200"):
+    sys.exit("Finalizando llamada.")
 else:
     data = my_socket.recv(1024)
     rec = data.decode('utf-8')
     print('Recibido -- ', rec)
-    log = open("logclient.txt",'a')
-    log.write(time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time()))+rec+"\r\n")
+    log = open(FICHEROLOG,'a')
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+rec+"\r\n")
     log.close()
     print("Enviando: " + LINEack)
-    log = open("logclient.txt",'a')
-    log.write(time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time()))+LINEack+"\r\n")
+    log = open(FICHEROLOG,'a')
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+LINEack+"\r\n")
     log.close()
     my_socket.send(bytes(LINEbye, 'utf-8') + b'\r\n')
 
 print("Terminando socket...")
+log = open(FICHEROLOG,'a')
+log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" Finishing.\r\n")
+log.close()
 
 
 # Cerramos todo
