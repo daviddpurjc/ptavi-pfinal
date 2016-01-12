@@ -8,6 +8,7 @@ import time
 import socket
 import sys
 from lxml import etree
+#from proxy_registrar import imprimeLog()
 
 # Parte cliente del UA
 
