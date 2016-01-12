@@ -9,6 +9,7 @@ import sys
 import json
 import time
 from lxml import etree
+from string import Template
 
 class SIPRegisterHandler(socketserver.DatagramRequestHandler):
     """
@@ -36,10 +37,8 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
         deco = line.decode('utf-8')
         
         if deco.startswith('REGISTER'):
-            cadena = " Received from "+str(self.client_address[0])+":"+str(self.client_address[1])+": "+deco
-            log = open("logproxy.txt",'a')
-            log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+cadena+"\r\n")
-            log.close()
+            self.lineaLog = " Received from "+str(self.client_address[0])+":"+str(self.client_address[1])+": "+deco
+            self.imprimeLog()
             if deco.find('Authorization:')!=-1:
                 self.ipUsuario = self.client_address[0]
                 self.fechaReg = time.time()
@@ -49,7 +48,7 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
                 self.direccion = trozo[:trozo.find(':')]
                 self.dic[self.direccion] = self.client_address[0]
                 self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-                self.lineaLog = " Sent toyaco to "+str(self.client_address[0])+":"+str(self.client_address[1])+": "+"SIP/2.0 200 OK"
+                self.lineaLog = " Sent to "+str(self.client_address[0])+":"+str(self.client_address[1])+": "+"SIP/2.0 200 OK"
                 self.imprimeLog()
                 if self.campoexpire == '0\r\n':
                     del self.dic[self.direccion]
@@ -125,8 +124,12 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
 
     def imprimeLog(self):
         #hay que quitar saltos de linea de self.lineaLog
+        #self.receptorUser = deco[deco.find(":")+1:deco.find("SIP")-1]
+        #l = Template(self.lineaLog)
+        #lineaSinSaltos = l.substitute(\r\n="\n")
+        lineaSinSaltos = self.lineaLog.replace("\r\n"," ")
         log = open(FICHEROLOG,'a')
-        log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+self.lineaLog+"\r\n")
+        log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+lineaSinSaltos+"\r\n")
         log.close()
 
 if __name__ == "__main__":

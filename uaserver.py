@@ -33,7 +33,6 @@ class SIPHandler(socketserver.DatagramRequestHandler):
             puertoRTP = deco[deco.find('audio')+6:deco.find('RTP')-1]
             fichero_audio = raiz.find("audio").attrib["path"]
             self.aEjecutar = "./mp32rtp -i "+ipEmisor+" -p "+puertoRTP+" < " + fichero_audio
-            print(self.aEjecutar)
             self.guarda()
         # Envia el audio al recibir el ACK.
         elif deco.startswith('ACK'):
@@ -50,7 +49,7 @@ class SIPHandler(socketserver.DatagramRequestHandler):
             self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")
 
     def guarda(self):
-        logg = open("linea.txt",'a')
+        logg = open("linea.txt",'w')
         logg.write(self.aEjecutar)
         logg.close()
 
