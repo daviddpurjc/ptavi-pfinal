@@ -8,14 +8,15 @@ import time
 import socket
 import sys
 import os
-from lxml import etree
+import xml.etree.ElementTree as ET
+#from lxml import etree
 #from proxy_registrar import imprimeLog
 
 # Parte cliente del UA
 
 config = sys.argv[1]
 metodo = sys.argv[2]
-fich = etree.parse(str(config))
+fich = ET.parse(str(config))
 raiz = fich.getroot()
 expires = ''
 
@@ -31,6 +32,7 @@ else:
 
 
 USUARIO = raiz.find("account").attrib["username"]
+PASSWD = raiz.find("account").attrib["passwd"]
 IP = raiz.find("uaserver").attrib["ip"]
 if IP == '':
     IP = "127.0.0.1"
@@ -42,7 +44,7 @@ PUERTOPROXY = raiz.find("regproxy").attrib["puerto"]
 LINEack = 'ACK sip:'+receptor+' SIP/2.0\r\n'
 LINEinv = 'INVITE sip:'+receptor+' SIP/2.0\r\nContent-Type: application/sdp\r\n\r\nv=0\r\no='+USUARIO+' '+IP+'\r\ns=tomorrowland\r\nt=0\r\nm=audio '+PUERTORTP+' RTP\r\n'
 LINEbye = 'BYE sip:'+receptor+' SIP/2.0\r\n'
-LINEreg = 'REGISTER sip:'+USUARIO+':'+PUERTO+' SIP/2.0\r\n'+'Expires: '+expires
+LINEreg = 'REGISTER sip:'+USUARIO+':'+PUERTO+' SIP/2.0\r\n'+'Expires: '+expires+"\r\n"
 
 if not len(sys.argv) == 4:
     sys.exit("Usage: python uaclient.py config method option")
@@ -67,16 +69,18 @@ log = open(FICHEROLOG,'a')
 log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" Starting...\r\n")
 log.close()
 print("Enviando: " + LINE)
+l = LINE.replace("\r\n"," ")
 log = open(FICHEROLOG,'a')
-log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+LINE+"\r\n")
+log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
 log.close()
 my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
 try:
     data = my_socket.recv(1024)
     r = data.decode('utf-8')
     print('Recibido -- ', r)
+    l = r.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+r+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
 except:
     log = open(FICHEROLOG,'a')
@@ -85,29 +89,37 @@ except:
     sys.exit("Error: No server listening")
 
 if r.startswith("SIP/2.0 401 Unauthorized"):
-    LINEregAut = LINEreg+"\r\nAuthorization: response=3949485"
+    # AQUI RECIBE EL NONCE, Y APLICANDO FUNCION HASH A NONCE+CONTRASEÑA OBTIENE EL RESPONSE
+    LINEregAut = LINEreg+"Authorization: response=3949485"
     print("Enviando: " + LINEregAut)
+    l = LINEregAut.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+LINEregAut+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
     my_socket.send(bytes(LINEregAut, 'utf-8') + b'\r\n')
     data = my_socket.recv(5120)
     re = data.decode('utf-8')
     print('Recibido -- ', re)
+    l = re.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+re+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
 elif r.startswith("SIP/2.0 100 Trying"):
     print("Enviando: " + LINEack)
+    extraigoRTP = r[r.find("audio")+6:r.find("RTP")-1]
+    l = LINEack.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+LINEack+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
     my_socket.send(bytes(LINEack, 'utf-8') + b'\r\n')
-    os.system("./mp32rtp -i 127.0.0.1 -p "+PUERTORTP+" < cancion.mp3")
+    print("Vamos a ejecutar: ")
+    print("./mp32rtp -i 127.0.0.1 -p "+extraigoRTP+" < cancion.mp3")
+    os.system("./mp32rtp -i 127.0.0.1 -p "+extraigoRTP+" < cancion.mp3")
     data = my_socket.recv(5120)
 elif r == "Error: no server listening at that direction":
+    l = r.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+r+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
     sys.exit("Error: No server listening")
 elif r.startswith("SIP/2.0 200"):
@@ -116,12 +128,14 @@ else:
     data = my_socket.recv(1024)
     rec = data.decode('utf-8')
     print('Recibido -- ', rec)
+    l = rec.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+rec+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
     print("Enviando: " + LINEack)
+    l = LINEack.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+LINEack+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
     my_socket.send(bytes(LINEbye, 'utf-8') + b'\r\n')
 

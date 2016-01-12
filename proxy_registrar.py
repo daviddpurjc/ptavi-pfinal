@@ -8,8 +8,9 @@ import socketserver
 import sys
 import json
 import time
-from lxml import etree
-from string import Template
+import random
+import xml.etree.ElementTree as ET
+#from lxml import etree
 
 class SIPRegisterHandler(socketserver.DatagramRequestHandler):
     """
@@ -37,9 +38,11 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
         deco = line.decode('utf-8')
         
         if deco.startswith('REGISTER'):
+            print(deco)
             self.lineaLog = " Received from "+str(self.client_address[0])+":"+str(self.client_address[1])+": "+deco
             self.imprimeLog()
             if deco.find('Authorization:')!=-1:
+                # aqui extraigo response y compruebo si es correcto
                 self.ipUsuario = self.client_address[0]
                 self.fechaReg = time.time()
                 self.campoexpire = deco[deco.find('Expires:')+9:deco.find("\r\nAuth")]
@@ -54,20 +57,24 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
                     del self.dic[self.direccion]
                 self.register2json()
             else:
-                cad = "SIP/2.0 401 Unauthorized\r\nWWW Authenticate: nonce=89898989"
+                # Me falta que cuando reciba el response, compruebe la autenticidad EOEOEOEOEOEOEOEOOEOEOEOEOEEOEO
+                nonce = ''
+                for i in range (21):
+                    nonce += str(random.randint(0, 9))
+
+                cad = "SIP/2.0 401 Unauthorized\r\nWWW Authenticate: nonce="+nonce
                 self.lineaLog = " Sent to "+str(self.client_address[0])+":"+str(self.client_address[1])+": "+cad
                 self.imprimeLog()
-                self.wfile.write(b"SIP/2.0 401 Unauthorized\r\nWWW Authenticate: nonce=89898989")
+                self.wfile.write(b"SIP/2.0 401 Unauthorized\r\nWWW Authenticate: nonce="+nonce.encode('utf-8'))
         elif deco.startswith('INVITE') or deco.startswith('BYE') or deco.startswith('ACK'):
             self.receptorUser = deco[deco.find(":")+1:deco.find("SIP")-1]
-            self.lineaLog =  " Received from "+str(self.client_address[0])+":"+str(self.client_address[1])+": "+deco
+            self.lineaLog =  " Received from "+str(self.client_address[0])+":"+str(self.client_address[1])+":"+deco
             self.imprimeLog()
             for diccionario in self.listas:
                 if diccionario['address'] == self.receptorUser and diccionario['expires'] >= time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time())):
                     self.contador += 1
                     direc = deco[deco.find('p:')+2:deco.find(' ')]
                     IPdestino = diccionario['ip']
-                    # HAY QUE CAMBIAR ESTO
                     PUERTOdestino = diccionario['puerto']
                     my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                     my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -97,7 +104,7 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
             self.lineaLog =  " Sent to "+str(self.client_address[0])+":"+str(self.client_address[1])+": "+deco
             self.imprimeLog()
             self.wfile.write("SIP/2.0 405 Method Not Allowed")
-                 
+
 
     def register2json(self):
         """ Gestionamos los usuarios registrados"""
@@ -139,7 +146,7 @@ if __name__ == "__main__":
 
     try:
         config = sys.argv[1]
-        fich = etree.parse(str(config))
+        fich = ET.parse(str(config))
         raiz = fich.getroot()
         puertomio = raiz.find("server").attrib["puerto"]
         FICHEROLOG = raiz.find("log").attrib["path"]
