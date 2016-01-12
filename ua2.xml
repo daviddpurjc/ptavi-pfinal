@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <config>
-    <account username="santicrack" passwd="sevenDOWN">
+    <account username="santicrack@yomail.com" passwd="sevenDOWN">
     </account>
     <uaserver ip="" puerto="5000">
     </uaserver>
-    <rtpaudio puerto="2000">
+    <rtpaudio puerto="45968">
     </rtpaudio>
-    <regproxy ip="127.0.0.1" puerto="3000">
+    <regproxy ip="127.0.0.1" puerto="8000">
     </regproxy>
-    <log path="logclient1.txt">
+    <log path="logclient2.txt">
     </log>
     <audio path="cancion.mp3">
     </audio>

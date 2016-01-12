@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <config>
-    <account username="davidcrack" passwd="sevenUP">
+    <account username="davidcrack@yomail.com" passwd="sevenUP">
     </account>
     <uaserver ip="" puerto="4000">
     </uaserver>
-    <rtpaudio puerto="5000">
+    <rtpaudio puerto="43899">
     </rtpaudio>
-    <regproxy ip="127.0.0.1" puerto="3000">
+    <regproxy ip="127.0.0.1" puerto="8000">
     </regproxy>
     <log path="logclient1.txt">
     </log>
