@@ -66,9 +66,9 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
                 if diccionario['address'] == self.receptorUser and diccionario['expires'] >= time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time())):
                     self.contador += 1
                     direc = deco[deco.find('p:')+2:deco.find(' ')]
-                    IPdestino = ""
+                    IPdestino = diccionario['ip']
                     # HAY QUE CAMBIAR ESTO
-                    PUERTOdestino = 5000 
+                    PUERTOdestino = diccionario['puerto']
                     my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                     my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                     my_socket.connect((IPdestino, int(PUERTOdestino)))

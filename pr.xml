@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<config>
+    <server name="MiTesoro" ip="127.0.0.1" puerto="3000">
+    </server>
+    <database path="registrados.json" passwdpath="/home/daviddp/ptavi-pfinal">
+    </database>
+    <log path="logproxy.txt">
+    </log>
+</config>

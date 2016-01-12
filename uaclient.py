@@ -7,6 +7,7 @@ import json
 import time
 import socket
 import sys
+import os
 from lxml import etree
 #from proxy_registrar import imprimeLog
 
@@ -102,6 +103,7 @@ elif r.startswith("SIP/2.0 100 Trying"):
     log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+LINEack+"\r\n")
     log.close()
     my_socket.send(bytes(LINEack, 'utf-8') + b'\r\n')
+    os.system("./mp32rtp -i 127.0.0.1 -p "+PUERTORTP+" < cancion.mp3")
     data = my_socket.recv(5120)
 elif r == "Error: no server listening at that direction":
     log = open(FICHEROLOG,'a')
