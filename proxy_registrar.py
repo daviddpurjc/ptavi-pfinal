@@ -10,7 +10,7 @@ import json
 import time
 import random
 import xml.etree.ElementTree as ET
-#from lxml import etree
+import hashlib
 
 class SIPRegisterHandler(socketserver.DatagramRequestHandler):
     """
@@ -26,6 +26,10 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
     receptorUser = ''
     contador = 0
     lineaLog = ''
+    #NONCE = ''
+    response = ''
+    nonce = ''
+    #con = ''
 
     def handle(self):
         """ Metodo principal del servidorproxy. """
@@ -42,30 +46,37 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
             self.lineaLog = " Received from "+str(self.client_address[0])+":"+str(self.client_address[1])+": "+deco
             self.imprimeLog()
             if deco.find('Authorization:')!=-1:
-                # aqui extraigo response y compruebo si es correcto
-                self.ipUsuario = self.client_address[0]
-                self.fechaReg = time.time()
-                self.campoexpire = deco[deco.find('Expires:')+9:deco.find("\r\nAuth")]
+                resp = deco[deco.find("response=")+9:]
+                self.response = resp.replace("\r\n","")
+                print("IMPRIME RESPONSE QUE VIENE DEL CLIENTE:"+self.response)
                 trozo = deco[deco.find('sip:')+4:deco.find('SIP')]
                 self.puertoUsuario = trozo[trozo.find(':')+1:]
                 self.direccion = trozo[:trozo.find(':')]
-                self.dic[self.direccion] = self.client_address[0]
-                self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-                self.lineaLog = " Sent to "+str(self.client_address[0])+":"+str(self.client_address[1])+": "+"SIP/2.0 200 OK"
-                self.imprimeLog()
-                if self.campoexpire == '0\r\n':
-                    del self.dic[self.direccion]
-                self.register2json()
+                if self.compruebaUsuario() == 1:
+                # aqui extraigo response y compruebo si es correcto
+                    self.ipUsuario = self.client_address[0]
+                    self.fechaReg = time.time()
+                    self.campoexpire = deco[deco.find('Expires:')+9:deco.find("\r\nAuth")]
+                    #trozo = deco[deco.find('sip:')+4:deco.find('SIP')]
+                    #self.puertoUsuario = trozo[trozo.find(':')+1:]
+                    #self.direccion = trozo[:trozo.find(':')]
+                    self.dic[self.direccion] = self.client_address[0]
+                    self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+                    self.lineaLog = " Sent to "+str(self.client_address[0])+":"+str(self.client_address[1])+": "+"SIP/2.0 200 OK"
+                    self.imprimeLog()
+                    if self.campoexpire == '0\r\n':
+                        del self.dic[self.direccion]
+                    self.register2json()
+                else:
+                    sys.exit("No estas autorizado, campeón.")
             else:
-                # Me falta que cuando reciba el response, compruebe la autenticidad EOEOEOEOEOEOEOEOOEOEOEOEOEEOEO
-                nonce = ''
                 for i in range (21):
-                    nonce += str(random.randint(0, 9))
-
-                cad = "SIP/2.0 401 Unauthorized\r\nWWW Authenticate: nonce="+nonce
+                    self.nonce += str(random.randint(0, 9))
+                self.guarda()
+                cad = "SIP/2.0 401 Unauthorized\r\nWWW Authenticate: nonce="+self.nonce
                 self.lineaLog = " Sent to "+str(self.client_address[0])+":"+str(self.client_address[1])+": "+cad
                 self.imprimeLog()
-                self.wfile.write(b"SIP/2.0 401 Unauthorized\r\nWWW Authenticate: nonce="+nonce.encode('utf-8'))
+                self.wfile.write(b"SIP/2.0 401 Unauthorized\r\nWWW Authenticate: nonce="+self.nonce.encode('utf-8'))
         elif deco.startswith('INVITE') or deco.startswith('BYE') or deco.startswith('ACK'):
             self.receptorUser = deco[deco.find(":")+1:deco.find("SIP")-1]
             self.lineaLog =  " Received from "+str(self.client_address[0])+":"+str(self.client_address[1])+":"+deco
@@ -130,14 +141,32 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
             pass
 
     def imprimeLog(self):
-        #hay que quitar saltos de linea de self.lineaLog
-        #self.receptorUser = deco[deco.find(":")+1:deco.find("SIP")-1]
-        #l = Template(self.lineaLog)
-        #lineaSinSaltos = l.substitute(\r\n="\n")
         lineaSinSaltos = self.lineaLog.replace("\r\n"," ")
         log = open(FICHEROLOG,'a')
         log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+lineaSinSaltos+"\r\n")
         log.close()
+
+    def guarda(self):
+        logg = open("nonce.txt",'w')
+        logg.write(self.nonce)
+        logg.close()
+
+    def compruebaUsuario(self):
+        m = hashlib.md5()
+        contraseña = "sevenUP"
+        logo = open("nonce.txt",'r')
+        self.nonce = logo.readline()
+        print("Esto es el nonce: "+self.nonce)
+        nonceB = self.nonce.encode('utf-8')
+        passwdB = contraseña.encode('utf-8')
+        m.update(passwdB + nonceB)
+        generado = m.hexdigest()
+        print("Esto es el response: "+self.response+"huecos?")
+        print("Esto es lo que compara con el response: "+generado+"huecos?")
+        if generado == self.response:
+            return 1
+        else:
+            return 0
 
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos

@@ -9,8 +9,7 @@ import socket
 import sys
 import os
 import xml.etree.ElementTree as ET
-#from lxml import etree
-#from proxy_registrar import imprimeLog
+import hashlib
 
 # Parte cliente del UA
 
@@ -90,7 +89,13 @@ except:
 
 if r.startswith("SIP/2.0 401 Unauthorized"):
     # AQUI RECIBE EL NONCE, Y APLICANDO FUNCION HASH A NONCE+CONTRASEÑA OBTIENE EL RESPONSE
-    LINEregAut = LINEreg+"Authorization: response=3949485"
+    m = hashlib.md5()
+    nonce = r[r.find("nonce=")+6:]
+    nonceB = nonce.encode('utf-8')
+    passwdB = PASSWD.encode('utf-8')
+    m.update(passwdB + nonceB)
+    response = m.hexdigest()
+    LINEregAut = LINEreg+"Authorization: response="+response
     print("Enviando: " + LINEregAut)
     l = LINEregAut.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
