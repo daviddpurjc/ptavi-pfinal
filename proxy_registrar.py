@@ -52,6 +52,8 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
                 trozo = deco[deco.find('sip:')+4:deco.find('SIP')]
                 self.puertoUsuario = trozo[trozo.find(':')+1:]
                 self.direccion = trozo[:trozo.find(':')]
+                #####
+                ####self.contraseña = #leo el fichero json
                 if self.compruebaUsuario() == 1:
                 # aqui extraigo response y compruebo si es correcto
                     self.ipUsuario = self.client_address[0]
@@ -68,7 +70,15 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
                         del self.dic[self.direccion]
                     self.register2json()
                 else:
-                    sys.exit("No estas autorizado, campeón.")
+                    self.nonce = ''
+                    for i in range (21):
+                        self.nonce += str(random.randint(0, 9))
+
+                    self.guarda()
+                    cad = "SIP/2.0 401 Unauthorized\r\nWWW Authenticate: nonce="+self.nonce
+                    self.lineaLog = " Sent to "+str(self.client_address[0])+":"+str(self.client_address[1])+": "+cad
+                    self.imprimeLog()
+                    self.wfile.write(b"SIP/2.0 401 Unauthorized\r\nWWW Authenticate: nonce="+self.nonce.encode('utf-8'))
             else:
                 for i in range (21):
                     self.nonce += str(random.randint(0, 9))
@@ -153,7 +163,14 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
 
     def compruebaUsuario(self):
         m = hashlib.md5()
-        contraseña = "sevenUP"
+        bibi = open("contraseñas.txt",'r')
+        for line in bibi:
+            print("esto es la linea: "+line)
+            print("esto es la direccion: "+self.direccion)
+            if line.startswith(self.direccion):
+                contraseña = line[line.find(",")+1:line.find(";")]
+
+        print("Esto es la jodida contraseña: "+contraseña)
         logo = open("nonce.txt",'r')
         self.nonce = logo.readline()
         print("Esto es el nonce: "+self.nonce)
