@@ -32,9 +32,11 @@ else:
 
 USUARIO = raiz.find("account").attrib["username"]
 PASSWD = raiz.find("account").attrib["passwd"]
-IP = raiz.find("uaserver").attrib["ip"]
-if IP == '':
+ip = raiz.find("uaserver").attrib["ip"]
+if ip == '':
     IP = "127.0.0.1"
+else:
+    IP = ip
 
 IPproxy = raiz.find("regproxy").attrib["ip"]
 PUERTO = raiz.find("uaserver").attrib["puerto"]

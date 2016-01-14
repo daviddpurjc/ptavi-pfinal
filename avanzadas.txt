@@ -1,0 +1,35 @@
+## Reestablecer los usuarios conectados
+
+# 
+
+## Integración de (c)vlc
+
+# Para ejecutar vlc desde el fichero, hay que añadir al uaclient la 
+# siguiente linea:     os.system("cvlc rtp://@"+IP+":"+PUERTORTP)
+
+elif r.startswith("SIP/2.0 100 Trying"):
+    print("Enviando: " + LINEack)
+    extraigoRTP = r[r.find("audio")+6:r.find("RTP")-1]
+    l = LINEack.replace("\r\n"," ")
+    log = open(FICHEROLOG,'a')
+    log.write(time.strftime('%Y%m%d%H%M%S', 
+                            time.gmtime(time.time()))+" "+l+"\r\n")
+    log.close()
+    my_socket.send(bytes(LINEack, 'utf-8') + b'\r\n')
+    os.system("cvlc rtp://@"+IP+":"+PUERTORTP)
+    print("Vamos a ejecutar: ")
+    print("./mp32rtp -i 127.0.0.1 -p "+extraigoRTP+" < cancion.mp3")
+    os.system("./mp32rtp -i 127.0.0.1 -p "+extraigoRTP+" < cancion.mp3")
+    data = my_socket.recv(5120)
+
+# En el uaserver añadimos la siguiente línea: 
+# os.system("cvlc rtp://@"+IP+":"+PRTP)
+
+elif deco.startswith('ACK'):
+            logo = open("linea.txt",'r')
+            os.system("cvlc rtp://@"+IP+":"+PRTP)
+            print("Vamos a ejecutar: ")
+            print(logo.readline())
+            os.system(logo.readline())
+            self.wfile.write(b"BYE sip: \
+"+self.origen.encode('utf-8')+b" SIP/2.0\r\n")

@@ -8,7 +8,6 @@ import socketserver
 import os
 import sys
 import xml.etree.ElementTree as ET
-#from lxml import etree
 
 class SIPHandler(socketserver.DatagramRequestHandler):
     """
@@ -77,6 +76,11 @@ if __name__ == "__main__":
         raiz = fich.getroot()
         puertomine = raiz.find("uaserver").attrib["puerto"]
         PRTP = raiz.find("rtpaudio").attrib["puerto"]
+        ip = raiz.find("uaserver").attrib["ip"]
+        if ip == ""
+            IP = 127.0.0.1
+        else:
+            IP = ip
         serv = socketserver.UDPServer(('', int(puertomine)), SIPHandler)
         print("Listening...")
         serv.serve_forever()
