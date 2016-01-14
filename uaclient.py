@@ -13,6 +13,9 @@ import hashlib
 
 # Parte cliente del UA
 
+if not len(sys.argv) == 4:
+    sys.exit("Usage: python uaclient.py config method option")
+
 config = sys.argv[1]
 metodo = sys.argv[2]
 fich = ET.parse(str(config))
@@ -50,8 +53,6 @@ LINEbye = 'BYE sip:'+receptor+' SIP/2.0\r\n'
 LINEreg = 'REGISTER sip:'+USUARIO+':'+PUERTO+' SI\
 P/2.0\r\nExpires: '+expires+"\r\n"
 
-if not len(sys.argv) == 4:
-    sys.exit("Usage: python uaclient.py config method option")
 if metodo == 'INVITE':
     LINE = LINEinv
 elif metodo == 'BYE':
@@ -72,7 +73,8 @@ log.write(time.strftime('%Y%m%d%H%M%S',
                         time.gmtime(time.time()))+" Starting...\r\n")
 log.close()
 print("Enviando: " + LINE)
-l = LINE.replace("\r\n"," ")
+ll = LINE.replace("\r\n"," ")
+l = "Sent to "+IPproxy+":"+PUERTOPROXY+" "+ll
 log = open(FICHEROLOG,'a')
 log.write(time.strftime('%Y%m%d%H%M%S', 
                         time.gmtime(time.time()))+" "+l+"\r\n")
@@ -82,7 +84,8 @@ try:
     data = my_socket.recv(1024)
     r = data.decode('utf-8')
     print('Recibido -- ', r)
-    l = r.replace("\r\n"," ")
+    ll = r.replace("\r\n"," ")
+    l = "Received from "+IPproxy+":"+PUERTOPROXY+" "+ll
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
                             time.gmtime(time.time()))+" "+l+"\r\n")
@@ -105,7 +108,8 @@ if r.startswith("SIP/2.0 401 Unauthorized"):
     response = m.hexdigest()
     LINEregAut = LINEreg+"Authorization: response="+response
     print("Enviando: " + LINEregAut)
-    l = LINEregAut.replace("\r\n"," ")
+    ll = LINEregAut.replace("\r\n"," ")
+    l = "Sent to "+IPproxy+":"+PUERTOPROXY+" "+ll
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
                             time.gmtime(time.time()))+" "+l+"\r\n")
@@ -114,7 +118,8 @@ if r.startswith("SIP/2.0 401 Unauthorized"):
     data = my_socket.recv(5120)
     re = data.decode('utf-8')
     print('Recibido -- ', re)
-    l = re.replace("\r\n"," ")
+    ll = re.replace("\r\n"," ")
+    l = "Received from "+IPproxy+":"+PUERTOPROXY+" "+ll
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
                             time.gmtime(time.time()))+" "+l+"\r\n")
@@ -122,7 +127,8 @@ if r.startswith("SIP/2.0 401 Unauthorized"):
 elif r.startswith("SIP/2.0 100 Trying"):
     print("Enviando: " + LINEack)
     extraigoRTP = r[r.find("audio")+6:r.find("RTP")-1]
-    l = LINEack.replace("\r\n"," ")
+    ll = LINEack.replace("\r\n"," ")
+    l = "Sent to "+IPproxy+":"+PUERTOPROXY+" "+ll
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
                             time.gmtime(time.time()))+" "+l+"\r\n")
@@ -131,8 +137,10 @@ elif r.startswith("SIP/2.0 100 Trying"):
     print("Vamos a ejecutar: ")
     print("./mp32rtp -i 127.0.0.1 -p "+extraigoRTP+" < cancion.mp3")
     os.system("./mp32rtp -i 127.0.0.1 -p "+extraigoRTP+" < cancion.mp3")
+    my_socket.send(bytes(LINEbye, 'utf-8') + b'\r\n')
+    #os.system("cvlc rtp://@"+IP+":"+PUERTORTP)
     data = my_socket.recv(5120)
-elif r == "Error: no server listening at that direction":
+elif r == "Error: no server listening.":
     l = r.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
@@ -145,13 +153,15 @@ else:
     data = my_socket.recv(1024)
     rec = data.decode('utf-8')
     print('Recibido -- ', rec)
-    l = rec.replace("\r\n"," ")
+    ll = rec.replace("\r\n"," ")
+    l = "Received from "+IPproxy+":"+PUERTOPROXY+" "+ll
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
                             time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
     print("Enviando: " + LINEack)
-    l = LINEack.replace("\r\n"," ")
+    ll = LINEack.replace("\r\n"," ")
+    l = "Sent to "+IPproxy+":"+PUERTOPROXY+" "+ll
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
                             time.gmtime(time.time()))+" "+l+"\r\n")

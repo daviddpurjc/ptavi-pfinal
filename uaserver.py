@@ -13,11 +13,9 @@ class SIPHandler(socketserver.DatagramRequestHandler):
     """
     Echo server class
     """
-    #ipEmisor = ''
-    #puertoRTP = ''
+    
     aEjecutar = ''
     origen = ''
-    #linea = ''
 
     def handle(self):
         """ Metodo principal del servidor. """
@@ -26,8 +24,6 @@ class SIPHandler(socketserver.DatagramRequestHandler):
         line = self.rfile.read()
         print("El proxy nos manda " + line.decode('utf-8'))
         deco = line.decode('utf-8')
-        #self.wfile.write(b"BYE sip: kakaka SIP/2.0\r\n")
-        #sys.exit("Llamada finalizada tras recibir RTP.")
 
         # Envia la respuesta de Trying+Ring+OK, si recibe un INVITE.
         if deco.startswith('INVITE'):
@@ -50,6 +46,7 @@ class SIPHandler(socketserver.DatagramRequestHandler):
             print("Vamos a ejecutar: ")
             print(logo.readline())
             os.system(logo.readline())
+            #os.system("cvlc rtp://@"+IP+":"+PRTP)
             self.wfile.write(b"BYE sip: \
 "+self.origen.encode('utf-8')+b" SIP/2.0\r\n")
         # Cuando el servidor reciba el BYE significará el cese de la llamada.
@@ -77,8 +74,8 @@ if __name__ == "__main__":
         puertomine = raiz.find("uaserver").attrib["puerto"]
         PRTP = raiz.find("rtpaudio").attrib["puerto"]
         ip = raiz.find("uaserver").attrib["ip"]
-        if ip == ""
-            IP = 127.0.0.1
+        if ip == "":
+            IP = "127.0.0.1"
         else:
             IP = ip
         serv = socketserver.UDPServer(('', int(puertomine)), SIPHandler)

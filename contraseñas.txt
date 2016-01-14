@@ -1,2 +1,2 @@
-davidcrack sevenUP
-santicrack sevenDOWN
+davidcrack@yomail.com,sevenUP;
+santicrack@yomail.com,sevenDOWN;

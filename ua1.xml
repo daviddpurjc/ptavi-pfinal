@@ -5,7 +5,7 @@
     </account>
     <uaserver ip="" puerto="4000">
     </uaserver>
-    <rtpaudio puerto="43899">
+    <rtpaudio puerto="52394">
     </rtpaudio>
     <regproxy ip="127.0.0.1" puerto="8000">
     </regproxy>
