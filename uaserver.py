@@ -35,12 +35,15 @@ class SIPHandler(socketserver.DatagramRequestHandler):
             sdp1 = deco[deco.find("Content"):deco.find("audio")+6]
             sdp = sdp1+PRTP+" RTP"
             print(sdp)
-            self.wfile.write(b"SIP/2.0 100 Trying\r\nSIP/2.0 180 Ring\r\nSIP/2.0 200 OK\r\n\r\n"+sdp.encode('utf-8'))
+            self.wfile.write(b"SIP/2.0 100 Trying\r\nSIP/2.0 180 Ring\r\nSIP \
+/2.0 200 OK\r\n\r\n"+sdp.encode('utf-8'))
             self.origen = deco[deco.find('o='):deco.find('s=')]
-            ipEmisor = self.origen[self.origen.find(' ')+1:self.origen.find("\r\n")]
+            ipEmisor = self.origen[self.origen.find(' \
+')+1:self.origen.find("\r\n")]
             puertoRTP = deco[deco.find('audio')+6:deco.find('RTP')-1]
             fichero_audio = raiz.find("audio").attrib["path"]
-            self.aEjecutar = "./mp32rtp -i "+ipEmisor+" -p "+puertoRTP+" < " + fichero_audio
+            self.aEjecutar = "./mp32rtp -i "+ipEmisor+" \
+-p "+puertoRTP+" < " + fichero_audio
             self.guarda()
         # Envia el audio al recibir el ACK.
         elif deco.startswith('ACK'):
@@ -48,10 +51,11 @@ class SIPHandler(socketserver.DatagramRequestHandler):
             print("Vamos a ejecutar: ")
             print(logo.readline())
             os.system(logo.readline())
-            self.wfile.write(b"BYE sip: "+self.origen.encode('utf-8')+b" SIP/2.0\r\n")
+            self.wfile.write(b"BYE sip: \
+"+self.origen.encode('utf-8')+b" SIP/2.0\r\n")
         # Cuando el servidor reciba el BYE significará el cese de la llamada.
         elif deco.startswith('BYE'):
-            self.wfile.write(b"SIP/2.0 200 OK cuelga tu cuelgo yo")
+            self.wfile.write(b"SIP/2.0 200 OK")
         # Si el método no es válido, el servidor se lo hará saber.
         else:
             self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")

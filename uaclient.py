@@ -41,9 +41,12 @@ PUERTO = raiz.find("uaserver").attrib["puerto"]
 PUERTORTP = raiz.find("rtpaudio").attrib["puerto"]
 PUERTOPROXY = raiz.find("regproxy").attrib["puerto"]
 LINEack = 'ACK sip:'+receptor+' SIP/2.0\r\n'
-LINEinv = 'INVITE sip:'+receptor+' SIP/2.0\r\nContent-Type: application/sdp\r\n\r\nv=0\r\no='+USUARIO+' '+IP+'\r\ns=tomorrowland\r\nt=0\r\nm=audio '+PUERTORTP+' RTP\r\n'
+LINEinv = 'INVITE sip:'+receptor+' SIP/2.0\r\nContent-Type: application\
+/sdp\r\n\r\nv=0\r\no='+USUARIO+' '+IP+'\r\ns=tomorrowland\r\nt=\
+0\r\nm=audio '+PUERTORTP+' RTP\r\n'
 LINEbye = 'BYE sip:'+receptor+' SIP/2.0\r\n'
-LINEreg = 'REGISTER sip:'+USUARIO+':'+PUERTO+' SIP/2.0\r\n'+'Expires: '+expires+"\r\n"
+LINEreg = 'REGISTER sip:'+USUARIO+':'+PUERTO+' SI\
+P/2.0\r\nExpires: '+expires+"\r\n"
 
 if not len(sys.argv) == 4:
     sys.exit("Usage: python uaclient.py config method option")
@@ -61,16 +64,16 @@ my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 my_socket.connect((IPproxy, int(PUERTOPROXY)))
 
-#log = open("logclient.txt",'r')
 FICHEROLOG = raiz.find("log").attrib["path"]
-#try:
 log = open(FICHEROLOG,'a')
-log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" Starting...\r\n")
+log.write(time.strftime('%Y%m%d%H%M%S', 
+                        time.gmtime(time.time()))+" Starting...\r\n")
 log.close()
 print("Enviando: " + LINE)
 l = LINE.replace("\r\n"," ")
 log = open(FICHEROLOG,'a')
-log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
+log.write(time.strftime('%Y%m%d%H%M%S', 
+                        time.gmtime(time.time()))+" "+l+"\r\n")
 log.close()
 my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
 try:
@@ -79,16 +82,19 @@ try:
     print('Recibido -- ', r)
     l = r.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', 
+                            time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
 except:
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" Error: No server listening at "+IPproxy+" port "+PUERTOPROXY+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))
+                            +" Error: No server listening at "+
+                            IPproxy+" port "+PUERTOPROXY+"\r\n")
     log.close()
     sys.exit("Error: No server listening")
 
 if r.startswith("SIP/2.0 401 Unauthorized"):
-    # AQUI RECIBE EL NONCE, Y APLICANDO FUNCION HASH A NONCE+CONTRASEÑA OBTIENE EL RESPONSE
+    # Recibe el nonce del proxy y genera el response
     m = hashlib.md5()
     nonce = r[r.find("nonce=")+6:]
     nonceB = nonce.encode('utf-8')
@@ -99,7 +105,8 @@ if r.startswith("SIP/2.0 401 Unauthorized"):
     print("Enviando: " + LINEregAut)
     l = LINEregAut.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', 
+                            time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
     my_socket.send(bytes(LINEregAut, 'utf-8') + b'\r\n')
     data = my_socket.recv(5120)
@@ -107,14 +114,16 @@ if r.startswith("SIP/2.0 401 Unauthorized"):
     print('Recibido -- ', re)
     l = re.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', 
+                            time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
 elif r.startswith("SIP/2.0 100 Trying"):
     print("Enviando: " + LINEack)
     extraigoRTP = r[r.find("audio")+6:r.find("RTP")-1]
     l = LINEack.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', 
+                            time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
     my_socket.send(bytes(LINEack, 'utf-8') + b'\r\n')
     print("Vamos a ejecutar: ")
@@ -124,7 +133,8 @@ elif r.startswith("SIP/2.0 100 Trying"):
 elif r == "Error: no server listening at that direction":
     l = r.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', 
+                            time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
     sys.exit("Error: No server listening")
 elif r.startswith("SIP/2.0 200"):
@@ -135,18 +145,21 @@ else:
     print('Recibido -- ', rec)
     l = rec.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', 
+                            time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
     print("Enviando: " + LINEack)
     l = LINEack.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
-    log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" "+l+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', 
+                            time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
     my_socket.send(bytes(LINEbye, 'utf-8') + b'\r\n')
 
 print("Terminando socket...")
 log = open(FICHEROLOG,'a')
-log.write(time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time()))+" Finishing.\r\n")
+log.write(time.strftime('%Y%m%d%H%M%S', 
+                        time.gmtime(time.time()))+" Finishing.\r\n")
 log.close()
 
 
