@@ -31,7 +31,7 @@ class SIPHandler(socketserver.DatagramRequestHandler):
             sdp = sdp1+PRTP+" RTP"
             self.wfile.write(b"SIP/2.0 100 Trying\r\nSIP/2.0 180 Ring\r\nSIP \
 /2.0 200 OK\r\n\r\n"+sdp.encode('utf-8'))
-            self.origen = deco[deco.find('o='):deco.find('s=')]
+            self.origen = deco[deco.find('o=')+2:deco.find('s=')]
             ipEmisor = self.origen[self.origen.find(' \
 ')+1:self.origen.find("\r\n")]
             puertoRTP = deco[deco.find('audio')+6:deco.find('RTP')-1]
@@ -42,12 +42,16 @@ class SIPHandler(socketserver.DatagramRequestHandler):
         # Envia el audio al recibir el ACK.
         elif deco.startswith('ACK'):
             logo = open("linea.txt",'r')
+            linea = logo.readline()
+            envio = linea[:linea.find(",")]
+            d = linea[linea.find(",")+1:]
+            di = d[:d.find(" ")]
             print("Vamos a ejecutar: ")
-            print(logo.readline())
-            #os.system(logo.readline())
+            print(envio)
+            os.system(envio)
             #os.system("cvlc rtp://@"+IP+":"+PRTP)
-            #self.wfile.write(b"BYE sip: \
-#"+self.origen.encode('utf-8')+b" SIP/2.0\r\n")
+            #self.wfile.write(b"BYE sip:\
+#"+di.encode('utf-8')+b" SIP/2.0\r\n")
         # Cuando el servidor reciba el BYE significará el cese de la llamada.
         elif deco.startswith('BYE'):
             self.wfile.write(b"SIP/2.0 200 OK")
@@ -57,7 +61,7 @@ class SIPHandler(socketserver.DatagramRequestHandler):
 
     def guarda(self):
         logg = open("linea.txt",'w')
-        logg.write(self.aEjecutar)
+        logg.write(self.aEjecutar+","+self.origen)
         logg.close()
 
 if __name__ == "__main__":

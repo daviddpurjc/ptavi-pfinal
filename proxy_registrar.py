@@ -82,12 +82,12 @@ WWW Authenticate: Digest nonce="+self.nonce.encode('utf-8'))
                 for i in range (21):
                     self.nonce += str(random.randint(0, 9))
                 self.guarda()
-                cad = "SIP/2.0 401 Unauthorized\r\nWWW Authenticate \
+                cad = "SIP/2.0 401 Unauthorized\r\nWWW Authenticate\
 : Digest nonce="+self.nonce
                 self.lineaLog = " Sent to "+str(self.client_address[0])+":\
 "+str(self.client_address[1])+": "+cad
                 self.imprimeLog()
-                self.wfile.write(b"SIP/2.0 401 Unauthorized\r\nWWW\
+                self.wfile.write(b"SIP/2.0 401 Unauthorized\r\nWWW \
 Authenticate: Digest nonce="+self.nonce.encode('utf-8'))
         elif self.deco.startswith('INVITE') or \
              self.deco.startswith('BYE') or \
@@ -139,6 +139,7 @@ Authenticate: Digest nonce="+self.nonce.encode('utf-8'))
                 self.imprimeLog()
                 self.contador = 0
                 self.wfile.write(b"SIP/2.0 404 User Not Found\r\n")
+
         else:
             self.lineaLog =  " Sent to "+str(self.client_address[0])+":\
 "+str(self.client_address[1])+": "+self.deco

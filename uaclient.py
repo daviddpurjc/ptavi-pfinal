@@ -139,7 +139,6 @@ elif r.startswith("SIP/2.0 100 Trying"):
     os.system("./mp32rtp -i 127.0.0.1 -p "+extraigoRTP+" < cancion.mp3")
     my_socket.send(bytes(LINEbye, 'utf-8') + b'\r\n')
     #os.system("cvlc rtp://@"+IP+":"+PUERTORTP)
-    data = my_socket.recv(5120)
 elif r == "Error: no server listening.":
     l = r.replace("\r\n"," ")
     log = open(FICHEROLOG,'a')
@@ -148,9 +147,31 @@ elif r == "Error: no server listening.":
     log.close()
     sys.exit("Error: No server listening")
 elif r.startswith("SIP/2.0 200"):
+    l = r.replace("\r\n"," ")
+    log = open(FICHEROLOG,'a')
+    log.write(time.strftime('%Y%m%d%H%M%S', 
+                            time.gmtime(time.time()))+" "+l+"\r\n")
+    log.close()
     sys.exit("Finalizando llamada.")
 elif r.startswith("SIP/2.0 404"):
+    ll = r.replace("\r\n"," ")
+    l = "Received from "+IPproxy+":"+PUERTOPROXY+" "+ll
+    log = open(FICHEROLOG,'a')
+    log.write(time.strftime('%Y%m%d%H%M%S', 
+                            time.gmtime(time.time()))+" "+l+"\r\n")
+    log.close()
     sys.exit("User Not Found")
+elif r.startswith("BYE"):
+    ll = r.replace("\r\n"," ")
+    l = "Received from "+IPproxy+":"+PUERTOPROXY+" "+ll
+    my_socket.send(bytes("SIP/2.0 200 OK", 'utf-8') + b'\r\n')
+    log = open(FICHEROLOG,'a')
+    log.write(time.strftime('%Y%m%d%H%M%S', 
+                            time.gmtime(time.time()))+" "+l+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', 
+                            time.gmtime(time.time()))+"SIP/2.0 200 OK\r\n")
+    log.close()
+    sys.exit("Llamada finalizada")
 else:
     data = my_socket.recv(1024)
     rec = data.decode('utf-8')
