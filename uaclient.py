@@ -106,7 +106,7 @@ if r.startswith("SIP/2.0 401 Unauthorized"):
     passwdB = PASSWD.encode('utf-8')
     m.update(passwdB + nonceB)
     response = m.hexdigest()
-    LINEregAut = LINEreg+"Authorization: response="+response
+    LINEregAut = LINEreg+"Authorization: Digest response="+response
     print("Enviando: " + LINEregAut)
     ll = LINEregAut.replace("\r\n"," ")
     l = "Sent to "+IPproxy+":"+PUERTOPROXY+" "+ll
@@ -149,6 +149,8 @@ elif r == "Error: no server listening.":
     sys.exit("Error: No server listening")
 elif r.startswith("SIP/2.0 200"):
     sys.exit("Finalizando llamada.")
+elif r.startswith("SIP/2.0 404"):
+    sys.exit("User Not Found")
 else:
     data = my_socket.recv(1024)
     rec = data.decode('utf-8')

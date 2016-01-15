@@ -28,6 +28,7 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
     lineaLog = ''
     response = ''
     nonce = ''
+    deco = ''
 
     def handle(self):
         """ Metodo principal del servidorproxy. """
@@ -36,24 +37,25 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
             self.json2registered()
 
         line = self.rfile.read()
-        deco = line.decode('utf-8')
+        self.deco = line.decode('utf-8')
         
-        if deco.startswith('REGISTER'):
-            print(deco)
+        if self.deco.startswith('REGISTER'):
+            print(self.deco)
             self.lineaLog = " Received from "+str(self.client_address[0])+"\
-:"+str(self.client_address[1])+": "+deco
+:"+str(self.client_address[1])+": "+self.deco
             self.imprimeLog()
-            if deco.find('Authorization:')!=-1:
-                resp = deco[deco.find("response=")+9:]
+            if self.deco.find('Authorization:')!=-1:
+                resp = self.deco[self.deco.find("response=")+9:]
                 self.response = resp.replace("\r\n","")
-                trozo = deco[deco.find('sip:')+4:deco.find('SIP')]
+                trozo = self.deco[self.deco.find('sip:')+4:
+                                  self.deco.find('SIP')]
                 self.puertoUsuario = trozo[trozo.find(':')+1:]
                 self.direccion = trozo[:trozo.find(':')]
                 if self.compruebaUsuario() == 1:
                     self.ipUsuario = self.client_address[0]
                     self.fechaReg = time.time()
-                    self.campoexpire = deco[deco.find('Expires:\
-')+9:deco.find("\r\nAuth")]
+                    self.campoexpire = self.deco[self.deco.find('Expires:\
+')+9:self.deco.find("\r\nAuth")]
                     self.dic[self.direccion] = self.client_address[0]
                     self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
                     self.lineaLog = " Sent to \
@@ -70,29 +72,30 @@ SIP/2.0 200 OK"
 
                     self.guarda()
                     cad = "SIP/2.0 401 Unauthorized\r\n\
-WWW Authenticate: nonce="+self.nonce
+WWW Authenticate: Digest nonce="+self.nonce
                     self.lineaLog = " Sent to "+str(self.client_address[0])+"\
 :"+str(self.client_address[1])+": "+cad
                     self.imprimeLog()
                     self.wfile.write(b"SIP/2.0 401 Unauthorized\r\n\
-WWW Authenticate: nonce="+self.nonce.encode('utf-8'))
+WWW Authenticate: Digest nonce="+self.nonce.encode('utf-8'))
             else:
                 for i in range (21):
                     self.nonce += str(random.randint(0, 9))
                 self.guarda()
                 cad = "SIP/2.0 401 Unauthorized\r\nWWW Authenticate \
-: nonce="+self.nonce
+: Digest nonce="+self.nonce
                 self.lineaLog = " Sent to "+str(self.client_address[0])+":\
 "+str(self.client_address[1])+": "+cad
                 self.imprimeLog()
                 self.wfile.write(b"SIP/2.0 401 Unauthorized\r\nWWW\
-Authenticate: nonce="+self.nonce.encode('utf-8'))
-        elif deco.startswith('INVITE') or \
-             deco.startswith('BYE') or \
-             deco.startswith('ACK'):
-            self.receptorUser = deco[deco.find(":")+1:deco.find("SIP")-1]
+Authenticate: Digest nonce="+self.nonce.encode('utf-8'))
+        elif self.deco.startswith('INVITE') or \
+             self.deco.startswith('BYE') or \
+             self.deco.startswith('ACK'):
+            self.receptorUser = self.deco[self.deco.find(":")+1:
+                                          self.deco.find("SIP")-1]
             self.lineaLog =  " Received from "+str(self.client_address[0])+"\
-:"+str(self.client_address[1])+":"+deco
+:"+str(self.client_address[1])+":"+self.deco
             self.imprimeLog()
             for diccionario in self.listas:
                 if diccionario['address'] == self.receptorUser and \
@@ -100,7 +103,8 @@ Authenticate: nonce="+self.nonce.encode('utf-8'))
                    time.strftime('%Y-%m-%d %H:%M:%S',
                                  time.gmtime(time.time())):
                     self.contador += 1
-                    direc = deco[deco.find('p:')+2:deco.find(' ')]
+                    direc = self.deco[self.deco.find('p:')+2:
+                                      self.deco.find(' ')]
                     IPdestino = diccionario['ip']
                     PUERTOdestino = diccionario['puerto']
                     my_socket = socket.socket(socket.AF_INET,
@@ -108,11 +112,12 @@ Authenticate: nonce="+self.nonce.encode('utf-8'))
                     my_socket.setsockopt(socket.SOL_SOCKET,
                                          socket.SO_REUSEADDR, 1)
                     my_socket.connect((IPdestino, int(PUERTOdestino)))
-                    print("Enviando: " + deco)
+                    self.cabeceraProxy()
+                    print("Enviando: " + self.deco)
                     self.lineaLog =  " Sent to "+str(IPdestino)+":\
-"+str(PUERTOdestino)+": "+deco
+"+str(PUERTOdestino)+": "+self.deco
                     self.imprimeLog()
-                    my_socket.send(bytes(deco, 'utf-8') + b'\r\n')
+                    my_socket.send(bytes(self.deco, 'utf-8') + b'\r\n')
                     try:
                         data = my_socket.recv(1024)
                         r = data.decode('utf-8')
@@ -136,7 +141,7 @@ Authenticate: nonce="+self.nonce.encode('utf-8'))
                 self.wfile.write(b"SIP/2.0 404 User Not Found\r\n")
         else:
             self.lineaLog =  " Sent to "+str(self.client_address[0])+":\
-"+str(self.client_address[1])+": "+deco
+"+str(self.client_address[1])+": "+self.deco
             self.imprimeLog()
             self.wfile.write("SIP/2.0 405 Method Not Allowed")
 
@@ -184,6 +189,16 @@ Authenticate: nonce="+self.nonce.encode('utf-8'))
         logg.write(self.nonce)
         logg.close()
 
+    def cabeceraProxy(self):
+        proxy = "Via: SIP/2.0/UDP "+IP+":"+PUERTO+";branch=z0hG5bKmp28a"
+        if self.deco.startswith("INVITE"):
+            linea = self.deco[:self.deco.find("Content-Type")]
+            linea2 = self.deco[self.deco.find("Content-Type"):]
+            self.deco = linea+proxy+"\r\n"+linea2
+        else:
+            linea = self.deco[:self.deco.find("\r\n")]
+            self.deco = linea+"\n"+proxy
+
     def compruebaUsuario(self):
         m = hashlib.md5()
         bibi = open(CONTRASEÑAS,'r')
@@ -212,12 +227,14 @@ if __name__ == "__main__":
         fich = ET.parse(str(config))
         raiz = fich.getroot()
         CONTRASEÑAS = raiz.find("database").attrib["passwdpath"]
-        puertomio = raiz.find("server").attrib["puerto"]
+        PUERTO = raiz.find("server").attrib["puerto"]
+        NOMBRE = raiz.find("server").attrib["name"]
+        IP = raiz.find("server").attrib["ip"]
         FICHEROLOG = raiz.find("log").attrib["path"]
         FICHEROREG = raiz.find("database").attrib["path"]
-        serv = socketserver.UDPServer(('', int(puertomio)),
+        serv = socketserver.UDPServer(('', int(PUERTO)),
                                        SIPRegisterHandler)
-        print("Server MiTesoro listening at port "+puertomio+"...")
+        print("Server "+NOMBRE+" listening at port "+PUERTO+"...")
         serv.serve_forever()
     except:
         sys.exit("Usage: python uaserver.py config")
