@@ -1,2 +1,2 @@
-“Cabecera proxy”
-"Reestablecer usuarios conectados"
+Cabecera proxy
+Reestablecer usuarios conectados
