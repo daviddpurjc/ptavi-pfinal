@@ -1,0 +1,3 @@
+He implementado un método en el proxy_registrar que añade la cabecera "Via" a los mensajes antes de transmitirlos: def cabeceraProxy(self)
+Además, usando el sistema de registro con json, reestablezco los usuarios registrados usando un fichero json, si lo hubiera. En caso de no estar creado, crea uno nuevo.
+Si ya disponemos de él, lo usa para actualizar el registro.

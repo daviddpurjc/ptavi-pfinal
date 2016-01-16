@@ -29,7 +29,7 @@ class SIPHandler(socketserver.DatagramRequestHandler):
         if deco.startswith('INVITE'):
             sdp1 = deco[deco.find("Content"):deco.find("audio")+6]
             sdp = sdp1+PRTP+" RTP"
-            self.wfile.write(b"SIP/2.0 100 Trying\r\nSIP/2.0 180 Ring\r\nSIP \
+            self.wfile.write(b"SIP/2.0 100 Trying\r\nSIP/2.0 180 Ring\r\nSIP\
 /2.0 200 OK\r\n\r\n"+sdp.encode('utf-8'))
             self.origen = deco[deco.find('o=')+2:deco.find('s=')]
             ipEmisor = self.origen[self.origen.find(' \

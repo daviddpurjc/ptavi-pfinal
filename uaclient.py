@@ -35,6 +35,7 @@ else:
 
 USUARIO = raiz.find("account").attrib["username"]
 PASSWD = raiz.find("account").attrib["passwd"]
+AUDIO = raiz.find("audio").attrib["path"]
 ip = raiz.find("uaserver").attrib["ip"]
 if ip == '':
     IP = "127.0.0.1"
@@ -74,7 +75,7 @@ log.write(time.strftime('%Y%m%d%H%M%S',
 log.close()
 print("Enviando: " + LINE)
 ll = LINE.replace("\r\n"," ")
-l = "Sent to "+IPproxy+":"+PUERTOPROXY+" "+ll
+l = "Sent to "+IPproxy+":"+PUERTOPROXY+": "+ll
 log = open(FICHEROLOG,'a')
 log.write(time.strftime('%Y%m%d%H%M%S', 
                         time.gmtime(time.time()))+" "+l+"\r\n")
@@ -85,7 +86,7 @@ try:
     r = data.decode('utf-8')
     print('Recibido -- ', r)
     ll = r.replace("\r\n"," ")
-    l = "Received from "+IPproxy+":"+PUERTOPROXY+" "+ll
+    l = "Received from "+IPproxy+":"+PUERTOPROXY+": "+ll
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
                             time.gmtime(time.time()))+" "+l+"\r\n")
@@ -109,7 +110,7 @@ if r.startswith("SIP/2.0 401 Unauthorized"):
     LINEregAut = LINEreg+"Authorization: Digest response="+response
     print("Enviando: " + LINEregAut)
     ll = LINEregAut.replace("\r\n"," ")
-    l = "Sent to "+IPproxy+":"+PUERTOPROXY+" "+ll
+    l = "Sent to "+IPproxy+":"+PUERTOPROXY+": "+ll
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
                             time.gmtime(time.time()))+" "+l+"\r\n")
@@ -119,7 +120,7 @@ if r.startswith("SIP/2.0 401 Unauthorized"):
     re = data.decode('utf-8')
     print('Recibido -- ', re)
     ll = re.replace("\r\n"," ")
-    l = "Received from "+IPproxy+":"+PUERTOPROXY+" "+ll
+    l = "Received from "+IPproxy+":"+PUERTOPROXY+": "+ll
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
                             time.gmtime(time.time()))+" "+l+"\r\n")
@@ -128,15 +129,23 @@ elif r.startswith("SIP/2.0 100 Trying"):
     print("Enviando: " + LINEack)
     extraigoRTP = r[r.find("audio")+6:r.find("RTP")-1]
     ll = LINEack.replace("\r\n"," ")
-    l = "Sent to "+IPproxy+":"+PUERTOPROXY+" "+ll
+    l = "Sent to "+IPproxy+":"+PUERTOPROXY+": "+ll
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
                             time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
     my_socket.send(bytes(LINEack, 'utf-8') + b'\r\n')
     print("Vamos a ejecutar: ")
-    print("./mp32rtp -i 127.0.0.1 -p "+extraigoRTP+" < cancion.mp3")
-    os.system("./mp32rtp -i 127.0.0.1 -p "+extraigoRTP+" < cancion.mp3")
+    print("./mp32rtp -i 127.0.0.1 -p "+extraigoRTP+" < "+AUDIO)
+    os.system("./mp32rtp -i 127.0.0.1 -p "+extraigoRTP+" < "+AUDIO)
+    l = "Sent to "+IPproxy+":"+PUERTOPROXY+": "+AUDIO
+    l2 = "Sent to "+IPproxy+":"+PUERTOPROXY+": "+LINEbye.replace("\r\n"," ")
+    log = open(FICHEROLOG,'a')
+    log.write(time.strftime('%Y%m%d%H%M%S', 
+                            time.gmtime(time.time()))+" "+l+"\r\n")
+    log.write(time.strftime('%Y%m%d%H%M%S', 
+                            time.gmtime(time.time()))+" "+l2+"\r\n")
+    log.close()
     my_socket.send(bytes(LINEbye, 'utf-8') + b'\r\n')
     #os.system("cvlc rtp://@"+IP+":"+PUERTORTP)
 elif r == "Error: no server listening.":
@@ -155,7 +164,7 @@ elif r.startswith("SIP/2.0 200"):
     sys.exit("Finalizando llamada.")
 elif r.startswith("SIP/2.0 404"):
     ll = r.replace("\r\n"," ")
-    l = "Received from "+IPproxy+":"+PUERTOPROXY+" "+ll
+    l = "Received from "+IPproxy+":"+PUERTOPROXY+": "+ll
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
                             time.gmtime(time.time()))+" "+l+"\r\n")
@@ -163,7 +172,7 @@ elif r.startswith("SIP/2.0 404"):
     sys.exit("User Not Found")
 elif r.startswith("BYE"):
     ll = r.replace("\r\n"," ")
-    l = "Received from "+IPproxy+":"+PUERTOPROXY+" "+ll
+    l = "Received from "+IPproxy+":"+PUERTOPROXY+": "+ll
     my_socket.send(bytes("SIP/2.0 200 OK", 'utf-8') + b'\r\n')
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
@@ -177,14 +186,14 @@ else:
     rec = data.decode('utf-8')
     print('Recibido -- ', rec)
     ll = rec.replace("\r\n"," ")
-    l = "Received from "+IPproxy+":"+PUERTOPROXY+" "+ll
+    l = "Received from "+IPproxy+":"+PUERTOPROXY+": "+ll
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
                             time.gmtime(time.time()))+" "+l+"\r\n")
     log.close()
     print("Enviando: " + LINEack)
     ll = LINEack.replace("\r\n"," ")
-    l = "Sent to "+IPproxy+":"+PUERTOPROXY+" "+ll
+    l = "Sent to "+IPproxy+":"+PUERTOPROXY+": "+ll
     log = open(FICHEROLOG,'a')
     log.write(time.strftime('%Y%m%d%H%M%S', 
                             time.gmtime(time.time()))+" "+l+"\r\n")

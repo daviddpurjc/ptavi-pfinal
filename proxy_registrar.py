@@ -41,16 +41,16 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
         
         if self.deco.startswith('REGISTER'):
             print(self.deco)
+            resp = self.deco[self.deco.find("response=")+9:]
+            self.response = resp.replace("\r\n","")
+            trozo = self.deco[self.deco.find('sip:')+4:
+                              self.deco.find('SIP')-1]
+            self.puertoUsuario = trozo[trozo.find(':')+1:]
+            self.direccion = trozo[:trozo.find(':')]
             self.lineaLog = " Received from "+str(self.client_address[0])+"\
 :"+str(self.client_address[1])+": "+self.deco
             self.imprimeLog()
             if self.deco.find('Authorization:')!=-1:
-                resp = self.deco[self.deco.find("response=")+9:]
-                self.response = resp.replace("\r\n","")
-                trozo = self.deco[self.deco.find('sip:')+4:
-                                  self.deco.find('SIP')]
-                self.puertoUsuario = trozo[trozo.find(':')+1:]
-                self.direccion = trozo[:trozo.find(':')]
                 if self.compruebaUsuario() == 1:
                     self.ipUsuario = self.client_address[0]
                     self.fechaReg = time.time()
@@ -59,7 +59,7 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
                     self.dic[self.direccion] = self.client_address[0]
                     self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
                     self.lineaLog = " Sent to \
-"+str(self.client_address[0])+":"+str(self.client_address[1])+": "+"\
+"+str(self.client_address[0])+":"+str(self.puertoUsuario)+": "+"\
 SIP/2.0 200 OK"
                     self.imprimeLog()
                     if self.campoexpire == '0\r\n':
@@ -74,7 +74,7 @@ SIP/2.0 200 OK"
                     cad = "SIP/2.0 401 Unauthorized\r\n\
 WWW Authenticate: Digest nonce="+self.nonce
                     self.lineaLog = " Sent to "+str(self.client_address[0])+"\
-:"+str(self.client_address[1])+": "+cad
+:"+str(self.puertoUsuario)+": "+cad
                     self.imprimeLog()
                     self.wfile.write(b"SIP/2.0 401 Unauthorized\r\n\
 WWW Authenticate: Digest nonce="+self.nonce.encode('utf-8'))
@@ -85,7 +85,7 @@ WWW Authenticate: Digest nonce="+self.nonce.encode('utf-8'))
                 cad = "SIP/2.0 401 Unauthorized\r\nWWW Authenticate\
 : Digest nonce="+self.nonce
                 self.lineaLog = " Sent to "+str(self.client_address[0])+":\
-"+str(self.client_address[1])+": "+cad
+"+str(self.puertoUsuario)+": "+cad
                 self.imprimeLog()
                 self.wfile.write(b"SIP/2.0 401 Unauthorized\r\nWWW \
 Authenticate: Digest nonce="+self.nonce.encode('utf-8'))
@@ -95,7 +95,7 @@ Authenticate: Digest nonce="+self.nonce.encode('utf-8'))
             self.receptorUser = self.deco[self.deco.find(":")+1:
                                           self.deco.find("SIP")-1]
             self.lineaLog =  " Received from "+str(self.client_address[0])+"\
-:"+str(self.client_address[1])+":"+self.deco
+:"+str(self.client_address[1])+": "+self.deco
             self.imprimeLog()
             for diccionario in self.listas:
                 if diccionario['address'] == self.receptorUser and \

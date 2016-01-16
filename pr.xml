@@ -3,7 +3,7 @@
 <config>
     <server name="MiTesoro" ip="127.0.0.1" puerto="8000">
     </server>
-    <database path="registrados.json" passwdpath="contraseñas.txt">
+    <database path="registrados.json" passwdpath="passwords.txt">
     </database>
     <log path="logproxy.txt">
     </log>
